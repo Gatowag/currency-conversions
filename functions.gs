@@ -19,7 +19,9 @@ function currencyConversion()
 		
 		if (isNaN(exAmnt) === false){
 			tab1.setActiveSelection(convCell).setValue(convAmnt).setNumberFormat("#,##0.00");
-		};
+		} else {
+			tab1.setActiveSelection(convCell).setValue("not available");
+		}
 	};
 	
 	tab1.setActiveSelection(convTimeCell).setValue(convTime).setNumberFormat("yyyy-mm-dd hh:mm");
@@ -47,8 +49,8 @@ function orderActive()
 		endColumnIndex: startColumn + dataRange.getNumColumns()
 	};
 	const requests = [
-		{sortRange: {dataRange: srange, sortSpecs: [{dimensionIndex: 0, sortOrder: "ASCENDING"}]}},
-		{sortRange: {dataRange: srange, sortSpecs: backgroundColors.map(rgb => ({backgroundColor: rgb}))}}
+		{sortRange: {range: srange, sortSpecs: [{dimensionIndex: 0, sortOrder: "ASCENDING"}]}},
+		{sortRange: {range: srange, sortSpecs: backgroundColors.map(rgb => ({backgroundColor: rgb}))}}
 	];
   
 	// 3. Request to Sheets API using the request body.
