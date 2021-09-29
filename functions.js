@@ -4,7 +4,7 @@
 
 function currencyConversion()
 {
-	const response = UrlFetchApp.fetch("https://openexchangerates.org/api/latest.json?app_id=YOUR_APP_ID");
+	const response = UrlFetchApp.fetch("https://openexchangerates.org/api/latest.json?app_id=f936377f62b44cceb2c385afcc9bbc85");
 		var exData = Utilities.jsonParse(response.getContentText());
 		const baseAmnt = tab1.getRange(3, 5, 1, 1).getValue();
 		const convTimeCell = tab1.getRange(1, 5, 1, 1);
@@ -63,14 +63,26 @@ function orderRank()
 	dataRange.sort({column:1});
 }
 
-function setRanks()
-{
-	for (i = 0; i < 20; i++) {
-		tab1.getRange('A' + (i + 4)).setValue(i + 1);
+function setRanks() {
+	rankedYoutubeCountries();
+	
+	let curr = [];
+	
+	for (i = 4; i < 24; i++) {
+		let focusISO = tab1.getRange("D" + i).getValue();
+
+		if (curr.length < 10 && curr.indexOf(focusISO) == -1) {
+			curr.push(focusISO);
+			tab1.getRange("A" + i + ":E" + i).setBackground("#ffffff");
+		} else {
+			tab1.getRange("A" + i + ":E" + i).setBackground("#d9d9d9");
+		}
+		
+		tab1.getRange("A" + (i)).setValue(i - 3);
 	}
 }
 
-function onEdit(e)
+function checkboxFunctions(e)
 {
 	let checkConv = ss.getRange('check_conversion');
 	let checkOrdActive = ss.getRange('check_order_active');
@@ -106,4 +118,33 @@ function onEdit(e)
 	} else {
 		return;
 	}
+}
+
+  // Make sure the client is loaded and sign-in is complete before calling this method.
+function rankedYoutubeCountries() {
+	
+	let ytData = gapi.client.youtubeAnalytics.reports.query({
+      "dimensions": "country",
+      "endDate": "2021-09-17",
+      "ids": "channel==MINE",
+	  "maxResults": 20,
+      "metrics": "estimatedMinutesWatched",
+      "sort": "-estimatedMinutesWatched",
+      "startDate": "2021-08-17"
+    });
+	
+	// let results = YouTube.Channels.list('contentDetails', {
+		// id: "UC42VsoDtra5hMiXZSsD6eGg"
+	// });
+
+	// for (var i = 0; i < results.items.length; i++) {
+		// var item = results.items[i];
+		// var playlistId = item.contentDetails.relatedPlaylists.uploads;
+		// var playlistResponse = YouTube.PlaylistItems.list('snippet', {
+			// playlistId: playlistId,
+			// maxResults: 20,
+		// });
+	// }
+
+	console.log(ytData);
 }
