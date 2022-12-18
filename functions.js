@@ -12,7 +12,7 @@ function currencyConversion()
 	// newVals is an array that we'll fill with a list of converted values
 	let newVals = [];
 
-	// loop through each ISO and write their converted rate to `newVals`
+	// loop through each ISO and write their converted rate to newVals
 	for(i=1; i<21; i++){
 		let rate = exData.rates[dataVals[i][0]];
 		let conversion = isNaN(rate) === false ? Math.round(rate * dataVals[0][1] * 100)/100 : `ISO not found`;
