@@ -7,27 +7,25 @@ function currencyConversion()
 {
 	const response = UrlFetchApp.fetch(`https://openexchangerates.org/api/latest.json?app_id=your_ID_goes_here`);
 	var exData = Utilities.jsonParse(response.getContentText());
-	// `timeCell` is the cell where we output the exchange rate timestamp
-	const timeCell = tab1.getRange(1, 5, 1, 1);
-	// `timeFormatted` converts `exData.timestamp` to millisceonds and gets a useful date out of that
-	const timeFormatted = new Date(exData.timestamp * 1000);
-	// `dataVals` creates a 2D array of ISO codes and our base USD value
+	// dataVals creates a 2D array of ISO codes and our base USD value
 	const dataVals = tab1.getRange(`D3:E23`).getValues();
-	// `newVals` is an array that we'll fill with a list of conversions
+	// newVals is an array that we'll fill with a list of converted values
 	let newVals = [];
 
 	// loop through each ISO and write their converted rate to `newVals`
 	for(i=1; i<21; i++){
-		// defines `rate` as each respective ISO exchange rate
 		let rate = exData.rates[dataVals[i][0]];
-		// defines `conversion` to fully converted amount unless it can't find the ISO
 		let conversion = isNaN(rate) === false ? Math.round(rate * dataVals[0][1] * 100)/100 : `ISO not found`;
-		// populate `newVals` with each conversion amount
 		newVals.push([conversion]);
 	};
 
 	// write all of the conversion amounts and format them to be more readable
 	tab1.getRange(`E4:E23`).setValues(newVals).setNumberFormat(`#,##0.00`);
+
+	// timeCell is the cell where we output the exchange rate timestamp
+	const timeCell = tab1.getRange(1, 5, 1, 1);
+	// timeFormatted converts exData.timestamp to millisceonds and gets a useful date out of that
+	const timeFormatted = new Date(exData.timestamp * 1000);
 
 	// writes the timestamp to the appropriate cell and simplifies the format
 	tab1.setActiveSelection(timeCell).setValue(timeFormatted).setNumberFormat(`yyyy-mm-dd hh:mm`);
@@ -74,7 +72,7 @@ function setRanks()
 	let focusISO = tab1.getRange(`D4:D23`).getValues();
 	let curr = [];
 	
-	for (i = 4; i < 24; i++) {
+	for (i=4; i<24; i++) {
 		if (curr.length < 10 && curr.indexOf(focusISO[i-4][0]) == -1) {
 			curr.push(focusISO[i-4][0]);
 			tab1.getRange(`A${i}:E${i}`).setBackground(`#ffffff`);
