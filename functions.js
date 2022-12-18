@@ -1,30 +1,36 @@
-	const ss = SpreadsheetApp.getActiveSpreadsheet();
-	const tab1 = ss.getSheetByName("Top 20");
-	const dataRange = tab1.getRange("A4:E23");
+// GLOBAL VARIABLES
+const ss = SpreadsheetApp.getActiveSpreadsheet();
+const tab1 = ss.getSheets()[0];
+const dataRange = tab1.getRange(`A4:E23`);
 
 function currencyConversion()
 {
-	const response = UrlFetchApp.fetch("https://openexchangerates.org/api/latest.json?app_id=f936377f62b44cceb2c385afcc9bbc85");
-		var exData = Utilities.jsonParse(response.getContentText());
-		const baseAmnt = tab1.getRange(3, 5, 1, 1).getValue();
-		const convTimeCell = tab1.getRange(1, 5, 1, 1);
-		const convTime = new Date(exData.timestamp * 1000);
+	const response = UrlFetchApp.fetch(`https://openexchangerates.org/api/latest.json?app_id=your_ID_goes_here`);
+	var exData = Utilities.jsonParse(response.getContentText());
+	// `timeCell` is the cell where we output the exchange rate timestamp
+	const timeCell = tab1.getRange(1, 5, 1, 1);
+	// `timeFormatted` converts `exData.timestamp` to millisceonds and gets a useful date out of that
+	const timeFormatted = new Date(exData.timestamp * 1000);
+	// `dataVals` creates a 2D array of ISO codes and our base USD value
+	const dataVals = tab1.getRange(`D3:E23`).getValues();
+	// `newVals` is an array that we'll fill with a list of conversions
+	let newVals = [];
 
-	for ( i = 0; i < 20; i++) {
-		let convCell = tab1.getRange(4 + i, 5, 1, 1);
-		let isoCell = tab1.getRange(4 + i, 4, 1, 1);
-		let isoVal = isoCell.getValue();
-		let exAmnt = exData.rates[isoVal];
-		let convAmnt = Math.round(100 * exAmnt * baseAmnt)/100;
-		
-		if (isNaN(exAmnt) === false){
-			tab1.setActiveSelection(convCell).setValue(convAmnt).setNumberFormat("#,##0.00");
-		} else {
-			tab1.setActiveSelection(convCell).setValue("not available");
-		}
+	// loop through each ISO and write their converted rate to `newVals`
+	for(i=1; i<21; i++){
+		// defines `rate` as each respective ISO exchange rate
+		let rate = exData.rates[dataVals[i][0]];
+		// defines `conversion` to fully converted amount unless it can't find the ISO
+		let conversion = isNaN(rate) === false ? Math.round(rate * dataVals[0][1] * 100)/100 : `ISO not found`;
+		// populate `newVals` with each conversion amount
+		newVals.push([conversion]);
 	};
-	
-	tab1.setActiveSelection(convTimeCell).setValue(convTime).setNumberFormat("yyyy-mm-dd hh:mm");
+
+	// write all of the conversion amounts and format them to be more readable
+	tab1.getRange(`E4:E23`).setValues(newVals).setNumberFormat(`#,##0.00`);
+
+	// writes the timestamp to the appropriate cell and simplifies the format
+	tab1.setActiveSelection(timeCell).setValue(timeFormatted).setNumberFormat(`yyyy-mm-dd hh:mm`);
 }
 
 function orderActive()
@@ -49,7 +55,7 @@ function orderActive()
 		endColumnIndex: startColumn + dataRange.getNumColumns()
 	};
 	const requests = [
-		{sortRange: {range: srange, sortSpecs: [{dimensionIndex: 0, sortOrder: "ASCENDING"}]}},
+		{sortRange: {range: srange, sortSpecs: [{dimensionIndex: 0, sortOrder: `ASCENDING`}]}},
 		{sortRange: {range: srange, sortSpecs: backgroundColors.map(rgb => ({backgroundColor: rgb}))}}
 	];
   
@@ -63,88 +69,45 @@ function orderRank()
 	dataRange.sort({column:1});
 }
 
-function setRanks() {
-	rankedYoutubeCountries();
-	
+function setRanks()
+{
+	let focusISO = tab1.getRange(`D4:D23`).getValues();
 	let curr = [];
 	
 	for (i = 4; i < 24; i++) {
-		let focusISO = tab1.getRange("D" + i).getValue();
-
-		if (curr.length < 10 && curr.indexOf(focusISO) == -1) {
-			curr.push(focusISO);
-			tab1.getRange("A" + i + ":E" + i).setBackground("#ffffff");
+		if (curr.length < 10 && curr.indexOf(focusISO[i-4][0]) == -1) {
+			curr.push(focusISO[i-4][0]);
+			tab1.getRange(`A${i}:E${i}`).setBackground(`#ffffff`);
 		} else {
-			tab1.getRange("A" + i + ":E" + i).setBackground("#d9d9d9");
+			tab1.getRange(`A${i}:E${i}`).setBackground(`#d9d9d9`);
 		}
 		
-		tab1.getRange("A" + (i)).setValue(i - 3);
+		tab1.getRange(`A${i}`).setValue(i-3);
 	}
 }
 
 function checkboxFunctions(e)
 {
-	let checkConv = ss.getRange('check_conversion');
-	let checkOrdActive = ss.getRange('check_order_active');
-	let checkOrdRank = ss.getRange('check_order_rank');
-	let checkSetRanks = ss.getRange('check_set_ranks');
-	let row = e.range.getRow();
-	let col = e.range.getColumn();
-	
-	if (col >= checkConv.getColumn() &&
-		col <= checkConv.getLastColumn() &&
-		row >= checkConv.getRow() &&
-		row <= checkConv.getLastRow()) {
+	const checkConvert = [3,7,ss.getRange(`G3`)];
+	const checkOrdActive = [5,7,ss.getRange(`G5`)];
+	const checkOrdRank = [6,7,ss.getRange(`G6`)];
+	const checkSetRanks = [8,7,ss.getRange(`G8`)];
+	const row = e.range.getRow();
+	const col = e.range.getColumn();
+
+	if (row == checkConvert[0] && col == checkConvert[1]) {
 			currencyConversion();
-			checkConv.uncheck();
-	} else if (	col >= checkOrdActive.getColumn() &&
-		col <= checkOrdActive.getLastColumn() &&
-		row >= checkOrdActive.getRow() &&
-		row <= checkOrdActive.getLastRow()) {
+			checkConvert[2].uncheck();
+	} else if (row == checkOrdActive[0] && col == checkOrdActive[1]) {
 			orderActive();
-			checkOrdActive.uncheck();
-	} else if (col >= checkOrdRank.getColumn() &&
-		col <= checkOrdRank.getLastColumn() &&
-		row >= checkOrdRank.getRow() &&
-		row <= checkOrdRank.getLastRow()) {
+			checkOrdActive[2].uncheck();
+	} else if (row == checkOrdRank[0] && col == checkOrdRank[1]) {
 			orderRank();
-			checkOrdRank.uncheck();
-	} else if (col >= checkSetRanks.getColumn() &&
-		col <= checkSetRanks.getLastColumn() &&
-		row >= checkSetRanks.getRow() &&
-		row <= checkSetRanks.getLastRow()) {
+			checkOrdRank[2].uncheck();
+	} else if (row == checkSetRanks[0] && col == checkSetRanks[1]) {
 			setRanks();
-			checkSetRanks.uncheck();
+			checkSetRanks[2].uncheck();
 	} else {
 		return;
 	}
-}
-
-  // Make sure the client is loaded and sign-in is complete before calling this method.
-function rankedYoutubeCountries() {
-	
-	let ytData = gapi.client.youtubeAnalytics.reports.query({
-      "dimensions": "country",
-      "endDate": "2021-09-17",
-      "ids": "channel==MINE",
-	  "maxResults": 20,
-      "metrics": "estimatedMinutesWatched",
-      "sort": "-estimatedMinutesWatched",
-      "startDate": "2021-08-17"
-    });
-	
-	// let results = YouTube.Channels.list('contentDetails', {
-		// id: "UC42VsoDtra5hMiXZSsD6eGg"
-	// });
-
-	// for (var i = 0; i < results.items.length; i++) {
-		// var item = results.items[i];
-		// var playlistId = item.contentDetails.relatedPlaylists.uploads;
-		// var playlistResponse = YouTube.PlaylistItems.list('snippet', {
-			// playlistId: playlistId,
-			// maxResults: 20,
-		// });
-	// }
-
-	console.log(ytData);
 }
