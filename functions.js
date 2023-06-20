@@ -1,26 +1,29 @@
 // GLOBAL VARIABLES
 const ss = SpreadsheetApp.getActiveSpreadsheet();
 const tab1 = ss.getSheets()[0];
-const dataRange = tab1.getRange(`A4:E23`);
+const dataRange = tab1.getRange(`A5:E24`);
 
 function currencyConversion()
 {
 	const response = UrlFetchApp.fetch(`https://openexchangerates.org/api/latest.json?app_id=your_ID_goes_here`);
 	var exData = Utilities.jsonParse(response.getContentText());
 	// dataVals creates a 2D array of ISO codes and our base USD value
-	const dataVals = tab1.getRange(`D3:E23`).getValues();
+	const dataVals = tab1.getRange(`D2:E24`).getValues();
+	const baseVal = dataVals[0][1];
+	const baseISO = dataVals[0][0];
+	const baseRate = exData.rates[baseISO];
 	// newVals is an array that we'll fill with a list of converted values
 	let newVals = [];
 
 	// loop through each ISO and write their converted rate to newVals
-	for(i=1; i<21; i++){
+	for(i=2; i<23; i++){
 		let rate = exData.rates[dataVals[i][0]];
-		let conversion = isNaN(rate) === false ? Math.round(rate * dataVals[0][1] * 100)/100 : `ISO not found`;
+		let conversion = isNaN(rate) === false ? Math.round(1/baseRate * rate * baseVal * 100)/100 : `ISO not found`;
 		newVals.push([conversion]);
 	};
 
 	// write all of the conversion amounts and format them to be more readable
-	tab1.getRange(`E4:E23`).setValues(newVals).setNumberFormat(`#,##0.00`);
+	tab1.getRange(`E4:E24`).setValues(newVals).setNumberFormat(`#,##0.00`);
 
 	// timeCell is the cell where we output the exchange rate timestamp
 	const timeCell = tab1.getRange(1, 5, 1, 1);
@@ -69,12 +72,12 @@ function orderRank()
 
 function setRanks()
 {
-	let focusISO = tab1.getRange(`D4:D23`).getValues();
-	let curr = [];
+	let focusISO = tab1.getRange(`D1:D24`).getValues();
+	let valid = [];
 	
-	for (i=4; i<24; i++) {
-		if (curr.length < 10 && curr.indexOf(focusISO[i-4][0]) == -1) {
-			curr.push(focusISO[i-4][0]);
+	for (i=5; i<25; i++) {
+		if (valid.length < 10 && valid.indexOf(focusISO[i-1][0]) == -1) {
+			valid.push(focusISO[i-1][0]);
 			tab1.getRange(`A${i}:E${i}`).setBackground(`#ffffff`);
 		} else {
 			tab1.getRange(`A${i}:E${i}`).setBackground(`#d9d9d9`);
