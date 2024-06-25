@@ -31,7 +31,7 @@ function currencyConversion()
 	const timeFormatted = new Date(exData.timestamp * 1000);
 
 	// writes the timestamp to the appropriate cell and simplifies the format
-	tab1.setActiveSelection(timeCell).setValue(timeFormatted).setNumberFormat(`yyyy-mm-dd hh:mm`);
+	tab1.setActiveSelection(timeCell).setValue(timeFormatted).setNumberFormat(`yyyy-mm-dd`);
 }
 
 function orderActive()
